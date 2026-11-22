@@ -1,0 +1,345 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum TeamRole {
+  OWNER
+  MANAGER
+  MEMBER
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// ==========================================
+// AUTHENTICATION - BETTER AUTH
+// ==========================================
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Application fields
+  lastActiveTeamId String?   @db.Uuid
+  deletedAt        DateTime?
+
+  sessions Session[]
+  accounts Account[]
+
+  memberships TeamMember[]
+
+  ownedTeams Team[] @relation("TeamOwner")
+
+  lastActiveTeam Team? @relation("LastActiveTeam", fields: [lastActiveTeamId], references: [id], onDelete: SetNull)
+
+  createdProjects Project[] @relation("ProjectCreatedBy")
+  updatedProjects Project[] @relation("ProjectUpdatedBy")
+
+  createdTasks Task[] @relation("TaskCreatedBy")
+  updatedTasks Task[] @relation("TaskUpdatedBy")
+
+  comments Comment[]
+
+  notifications          Notification[] @relation("NotificationRecipient")
+  triggeredNotifications Notification[] @relation("NotificationActor")
+
+  activityLogs ActivityLog[] @relation("ActivityActor")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  accountId             String
+  providerId            String
+  userId                String    @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ==========================================
+// TEAMS
+// ==========================================
+
+model Team {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  ownerId     String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  owner User @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  members  TeamMember[]
+  projects Project[]
+  tasks    Task[]
+
+  lastActiveUsers User[] @relation("LastActiveTeam")
+
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+
+  @@index([ownerId])
+  @@map("team")
+}
+
+model TeamMember {
+  teamId   String   @db.Uuid
+  userId   String   @db.Uuid
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  assignedTasks Task[] @relation("TaskAssignee")
+
+  @@id([teamId, userId])
+  @@index([userId])
+  @@index([teamId, role])
+  @@map("team_member")
+}
+
+// ==========================================
+// PROJECTS
+// ==========================================
+
+model Project {
+  id          String        @id @default(uuid()) @db.Uuid
+  teamId      String        @db.Uuid
+  name        String
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  startDate   DateTime?
+  endDate     DateTime?
+
+  createdById String    @db.Uuid
+  updatedById String?   @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Restrict)
+
+  createdBy User  @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy User? @relation("ProjectUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  tasks Task[]
+
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+
+  @@unique([id, teamId])
+  @@index([teamId, status])
+  @@index([createdById])
+  @@index([updatedById])
+  @@map("project")
+}
+
+// ==========================================
+// TASKS
+// ==========================================
+
+model Task {
+  id          String       @id @default(uuid()) @db.Uuid
+  teamId      String       @db.Uuid
+  projectId   String       @db.Uuid
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+
+  assignedToId String?   @db.Uuid
+  dueDate      DateTime?
+
+  createdById String    @db.Uuid
+  updatedById String?   @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Restrict)
+
+  project Project @relation(fields: [projectId, teamId], references: [id, teamId], onDelete: Cascade)
+
+  assignee TeamMember? @relation("TaskAssignee", fields: [teamId, assignedToId], references: [teamId, userId], onDelete: Restrict)
+
+  createdBy User  @relation("TaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy User? @relation("TaskUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  comments Comment[]
+
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+
+  @@unique([id, teamId])
+  @@index([teamId, status])
+  @@index([teamId, priority])
+  @@index([teamId, assignedToId])
+  @@index([projectId, teamId])
+  @@index([dueDate])
+  @@index([createdById])
+  @@map("task")
+}
+
+// ==========================================
+// COMMENTS
+// ==========================================
+
+model Comment {
+  id        String    @id @default(uuid()) @db.Uuid
+  teamId    String    @db.Uuid
+  taskId    String    @db.Uuid
+  userId    String?   @db.Uuid
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  task Task @relation(fields: [taskId, teamId], references: [id, teamId], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  activityLogs ActivityLog[]
+
+  @@unique([id, teamId])
+  @@index([taskId, teamId])
+  @@index([userId])
+  @@map("comment")
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id        String  @id @default(uuid()) @db.Uuid
+  userId    String  @db.Uuid
+  actorId   String? @db.Uuid
+  teamId    String? @db.Uuid
+  projectId String? @db.Uuid
+  taskId    String? @db.Uuid
+
+  type      String
+  title     String
+  message   String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  recipient User  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor     User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  team    Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId, teamId], references: [id, teamId], onDelete: SetNull)
+  task    Task?    @relation(fields: [taskId, teamId], references: [id, teamId], onDelete: SetNull)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@index([teamId])
+  @@map("notification")
+}
+
+// ==========================================
+// ACTIVITY LOGS
+// ==========================================
+
+model ActivityLog {
+  id        String  @id @default(uuid()) @db.Uuid
+  teamId    String  @db.Uuid
+  actorId   String? @db.Uuid
+  projectId String? @db.Uuid
+  taskId    String? @db.Uuid
+  commentId String? @db.Uuid
+
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Restrict)
+
+  actor User? @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  project Project? @relation(fields: [projectId, teamId], references: [id, teamId], onDelete: Restrict)
+  task    Task?    @relation(fields: [taskId, teamId], references: [id, teamId], onDelete: Restrict)
+  comment Comment? @relation(fields: [commentId, teamId], references: [id, teamId], onDelete: Restrict)
+
+  @@index([teamId, createdAt])
+  @@index([actorId])
+  @@index([projectId, teamId])
+  @@index([taskId, teamId])
+  @@index([commentId, teamId])
+  @@map("activity_log")
+}

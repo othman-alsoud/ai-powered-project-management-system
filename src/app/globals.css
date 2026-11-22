@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+:root {
+  /* Default base theme */
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Surface & Background Tokens (docs/DESIGN_GUIDELINES.md §2.2) */
+  --color-bg-canvas: #F8FAFC;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-muted: #F1F5F9;
+  --color-bg-hover: #F1F5F9;
+  --color-bg-selected: #E2E8F0;
+  --color-bg-overlay: rgba(15, 23, 42, 0.5);
+
+  /* Border Tokens (§2.3) */
+  --color-border-subtle: #E2E8F0;
+  --color-border-default: #CBD5E1;
+  --color-border-strong: #94A3B8;
+  --color-border-destructive: #FCA5A5;
+
+  /* Text Tokens (§2.4) */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
+  --color-text-disabled: #CBD5E1;
+  --color-text-on-accent: #FFFFFF;
+  --color-text-destructive: #DC2626;
+  --color-text-link: #0D9488;
+
+  /* Accent Tokens (§2.5) */
+  --color-accent-primary: #0D9488;
+  --color-accent-primary-hover: #0F766E;
+  --color-accent-secondary: #10B981;
+
+  /* Semantic Status Tokens — Task Status (§2.6) */
+  --color-status-todo: #64748B;
+  --color-status-in-progress: #0284C7;
+  --color-status-in-review: #8B5CF6;
+  --color-status-done: #059669;
+
+  /* Semantic Status Tokens — Task Priority (§2.6) */
+  --color-priority-high: #E11D48;
+  --color-priority-medium: #D97706;
+  --color-priority-low: #64748B;
+
+  /* Destructive / Danger Tokens (§2.6) */
+  --color-destructive: #DC2626;
+  --color-destructive-bg: #FEF2F2;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-bg-canvas: var(--color-bg-canvas);
+  --color-bg-surface: var(--color-bg-surface);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-muted: var(--color-bg-muted);
+  --color-bg-hover: var(--color-bg-hover);
+  --color-bg-selected: var(--color-bg-selected);
+  --color-bg-overlay: var(--color-bg-overlay);
+
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-default: var(--color-border-default);
+  --color-border-strong: var(--color-border-strong);
+  --color-border-destructive: var(--color-border-destructive);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-disabled: var(--color-text-disabled);
+  --color-text-on-accent: var(--color-text-on-accent);
+  --color-text-destructive: var(--color-text-destructive);
+  --color-text-link: var(--color-text-link);
+
+  --color-accent-primary: var(--color-accent-primary);
+  --color-accent-primary-hover: var(--color-accent-primary-hover);
+  --color-accent-secondary: var(--color-accent-secondary);
+
+  --color-status-todo: var(--color-status-todo);
+  --color-status-in-progress: var(--color-status-in-progress);
+  --color-status-in-review: var(--color-status-in-review);
+  --color-status-done: var(--color-status-done);
+
+  --color-priority-high: var(--color-priority-high);
+  --color-priority-medium: var(--color-priority-medium);
+  --color-priority-low: var(--color-priority-low);
+
+  --color-destructive: var(--color-destructive);
+  --color-destructive-bg: var(--color-destructive-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+
+    /* Surface & Background Tokens (docs/DESIGN_GUIDELINES.md §2.2) */
+    --color-bg-canvas: #0B1120;
+    --color-bg-surface: #111C33;
+    --color-bg-elevated: #152238;
+    --color-bg-muted: #0F1A2E;
+    --color-bg-hover: #1A2744;
+    --color-bg-selected: #1E3058;
+    --color-bg-overlay: rgba(0, 0, 0, 0.6);
+
+    /* Border Tokens (§2.3) */
+    --color-border-subtle: #1E293B;
+    --color-border-default: #334155;
+    --color-border-strong: #475569;
+    --color-border-destructive: #7F1D1D;
+
+    /* Text Tokens (§2.4) */
+    --color-text-primary: #F1F5F9;
+    --color-text-secondary: #CBD5E1;
+    --color-text-muted: #94A3B8;
+    --color-text-disabled: #334155;
+    --color-text-on-accent: #042F2E;
+    --color-text-destructive: #F87171;
+    --color-text-link: #14B8A6;
+
+    /* Accent Tokens (§2.5) */
+    --color-accent-primary: #14B8A6;
+    --color-accent-primary-hover: #0D9488;
+    --color-accent-secondary: #34D399;
+
+    /* Semantic Status Tokens — Task Status (§2.6) */
+    --color-status-todo: #94A3B8;
+    --color-status-in-progress: #38BDF8;
+    --color-status-in-review: #A78BFA;
+    --color-status-done: #34D399;
+
+    /* Semantic Status Tokens — Task Priority (§2.6) */
+    --color-priority-high: #FB7185;
+    --color-priority-medium: #FCD34D;
+    --color-priority-low: #94A3B8;
+
+    /* Destructive / Danger Tokens (§2.6) */
+    --color-destructive: #EF4444;
+    --color-destructive-bg: #450A0A;
+  }
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+
+  /* Surface & Background Tokens (docs/DESIGN_GUIDELINES.md §2.2) */
+  --color-bg-canvas: #0B1120;
+  --color-bg-surface: #111C33;
+  --color-bg-elevated: #152238;
+  --color-bg-muted: #0F1A2E;
+  --color-bg-hover: #1A2744;
+  --color-bg-selected: #1E3058;
+  --color-bg-overlay: rgba(0, 0, 0, 0.6);
+
+  /* Border Tokens (§2.3) */
+  --color-border-subtle: #1E293B;
+  --color-border-default: #334155;
+  --color-border-strong: #475569;
+  --color-border-destructive: #7F1D1D;
+
+  /* Text Tokens (§2.4) */
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+  --color-text-disabled: #334155;
+  --color-text-on-accent: #042F2E;
+  --color-text-destructive: #F87171;
+  --color-text-link: #14B8A6;
+
+  /* Accent Tokens (§2.5) */
+  --color-accent-primary: #14B8A6;
+  --color-accent-primary-hover: #0D9488;
+  --color-accent-secondary: #34D399;
+
+  /* Semantic Status Tokens — Task Status (§2.6) */
+  --color-status-todo: #94A3B8;
+  --color-status-in-progress: #38BDF8;
+  --color-status-in-review: #A78BFA;
+  --color-status-done: #34D399;
+
+  /* Semantic Status Tokens — Task Priority (§2.6) */
+  --color-priority-high: #FB7185;
+  --color-priority-medium: #FCD34D;
+  --color-priority-low: #94A3B8;
+
+  /* Destructive / Danger Tokens (§2.6) */
+  --color-destructive: #EF4444;
+  --color-destructive-bg: #450A0A;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
