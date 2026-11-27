@@ -6,7 +6,7 @@ const SESSION_COOKIE_NAMES = [
   "__Secure-better-auth.session_token",
 ];
 
-const PROTECTED_ROUTE_PREFIXES = ["/teams", "/dashboard"];
+const PROTECTED_ROUTE_PREFIXES = ["/teams", "/dashboard", "/account"];
 
 /**
  * Next.js 16 Proxy function providing optimistic route protection.
@@ -37,7 +37,10 @@ export function proxy(request: NextRequest) {
   const isProtectedRoute = PROTECTED_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
-
+ // Redirect authenticated users away from the public landing page
+  if (pathname === "/" && hasSessionCookie) {
+    return NextResponse.redirect(new URL("/teams", request.url));
+  }
   // 4. Redirect unauthenticated requests targeting protected routes to /sign-in
   if (isProtectedRoute && !hasSessionCookie) {
     const loginUrl = new URL("/sign-in", request.url);

@@ -2,200 +2,226 @@
 
 :root {
   /* Default base theme */
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
 
-  /* Surface & Background Tokens (docs/DESIGN_GUIDELINES.md §2.2) */
+  /* Surface & Background Tokens */
   --color-bg-canvas: #F8FAFC;
+  --color-bg-base: #F8FAFC;
   --color-bg-surface: #FFFFFF;
   --color-bg-elevated: #FFFFFF;
   --color-bg-muted: #F1F5F9;
   --color-bg-hover: #F1F5F9;
+  --color-bg-surface-hover: #F8FAFC;
   --color-bg-selected: #E2E8F0;
-  --color-bg-overlay: rgba(15, 23, 42, 0.5);
+  --color-bg-overlay: rgba(15, 23, 42, 0.6);
 
-  /* Border Tokens (§2.3) */
+  /* Border Tokens */
   --color-border-subtle: #E2E8F0;
   --color-border-default: #CBD5E1;
   --color-border-strong: #94A3B8;
+  --color-border-focus: #0F766E;
   --color-border-destructive: #FCA5A5;
+  --color-border-warning: #FDE68A;
 
-  /* Text Tokens (§2.4) */
+  /* Text Tokens */
   --color-text-primary: #0F172A;
   --color-text-secondary: #334155;
-  --color-text-muted: #64748B;
-  --color-text-disabled: #CBD5E1;
+  --color-text-muted: #475569;
+  --color-text-disabled: #64748B;
   --color-text-on-accent: #FFFFFF;
   --color-text-destructive: #DC2626;
-  --color-text-link: #0D9488;
+  --color-text-warning: #B45309;
+  --color-text-link: #0F766E;
 
-  /* Accent Tokens (§2.5) */
-  --color-accent-primary: #0D9488;
-  --color-accent-primary-hover: #0F766E;
-  --color-accent-secondary: #10B981;
+  /* Accent Tokens (Nordic Teal & Cyan — AA compliant on light surfaces) */
+  --color-accent-primary: #0F766E;
+  --color-accent-primary-hover: #115E59;
+  --color-accent-secondary: #059669;
+  --color-accent-light: #F0FDFA;
 
-  /* Semantic Status Tokens — Task Status (§2.6) */
+  /* Semantic Status Tokens */
   --color-status-todo: #64748B;
   --color-status-in-progress: #0284C7;
-  --color-status-in-review: #8B5CF6;
+  --color-status-in-review: #7C3AED;
   --color-status-done: #059669;
 
-  /* Semantic Status Tokens — Task Priority (§2.6) */
+  /* Semantic Priority Tokens */
   --color-priority-high: #E11D48;
   --color-priority-medium: #D97706;
   --color-priority-low: #64748B;
 
-  /* Destructive / Danger Tokens (§2.6) */
+  /* Destructive & Warning Tokens */
   --color-destructive: #DC2626;
   --color-destructive-bg: #FEF2F2;
+  --color-warning-bg: #FFFBEB;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --color-canvas: var(--color-bg-canvas);
+  --color-surface: var(--color-bg-surface);
+  --color-elevated: var(--color-bg-elevated);
 
-  --color-bg-canvas: var(--color-bg-canvas);
-  --color-bg-surface: var(--color-bg-surface);
-  --color-bg-elevated: var(--color-bg-elevated);
-  --color-bg-muted: var(--color-bg-muted);
-  --color-bg-hover: var(--color-bg-hover);
-  --color-bg-selected: var(--color-bg-selected);
-  --color-bg-overlay: var(--color-bg-overlay);
-
-  --color-border-subtle: var(--color-border-subtle);
-  --color-border-default: var(--color-border-default);
-  --color-border-strong: var(--color-border-strong);
-  --color-border-destructive: var(--color-border-destructive);
-
-  --color-text-primary: var(--color-text-primary);
-  --color-text-secondary: var(--color-text-secondary);
-  --color-text-muted: var(--color-text-muted);
-  --color-text-disabled: var(--color-text-disabled);
-  --color-text-on-accent: var(--color-text-on-accent);
-  --color-text-destructive: var(--color-text-destructive);
-  --color-text-link: var(--color-text-link);
-
-  --color-accent-primary: var(--color-accent-primary);
-  --color-accent-primary-hover: var(--color-accent-primary-hover);
-  --color-accent-secondary: var(--color-accent-secondary);
-
-  --color-status-todo: var(--color-status-todo);
-  --color-status-in-progress: var(--color-status-in-progress);
-  --color-status-in-review: var(--color-status-in-review);
-  --color-status-done: var(--color-status-done);
-
-  --color-priority-high: var(--color-priority-high);
-  --color-priority-medium: var(--color-priority-medium);
-  --color-priority-low: var(--color-priority-low);
-
-  --color-destructive: var(--color-destructive);
-  --color-destructive-bg: var(--color-destructive-bg);
+  --color-accent: #0D9488;
+  --color-accent-hover: #0F766E;
+  --color-accent-light: #F0FDFA;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0B1120;
+    --foreground: #F1F5F9;
 
-    /* Surface & Background Tokens (docs/DESIGN_GUIDELINES.md §2.2) */
     --color-bg-canvas: #0B1120;
+    --color-bg-base: #0B1120;
     --color-bg-surface: #111C33;
     --color-bg-elevated: #152238;
     --color-bg-muted: #0F1A2E;
     --color-bg-hover: #1A2744;
+    --color-bg-surface-hover: #16243F;
     --color-bg-selected: #1E3058;
-    --color-bg-overlay: rgba(0, 0, 0, 0.6);
+    --color-bg-overlay: rgba(0, 0, 0, 0.75);
 
-    /* Border Tokens (§2.3) */
     --color-border-subtle: #1E293B;
     --color-border-default: #334155;
     --color-border-strong: #475569;
+    --color-border-focus: #14B8A6;
     --color-border-destructive: #7F1D1D;
+    --color-border-warning: #78350F;
 
-    /* Text Tokens (§2.4) */
     --color-text-primary: #F1F5F9;
     --color-text-secondary: #CBD5E1;
     --color-text-muted: #94A3B8;
-    --color-text-disabled: #334155;
+    --color-text-disabled: #475569;
     --color-text-on-accent: #042F2E;
     --color-text-destructive: #F87171;
+    --color-text-warning: #FCD34D;
     --color-text-link: #14B8A6;
 
-    /* Accent Tokens (§2.5) */
     --color-accent-primary: #14B8A6;
     --color-accent-primary-hover: #0D9488;
     --color-accent-secondary: #34D399;
+    --color-accent-light: #042F2E;
 
-    /* Semantic Status Tokens — Task Status (§2.6) */
     --color-status-todo: #94A3B8;
     --color-status-in-progress: #38BDF8;
     --color-status-in-review: #A78BFA;
     --color-status-done: #34D399;
 
-    /* Semantic Status Tokens — Task Priority (§2.6) */
     --color-priority-high: #FB7185;
     --color-priority-medium: #FCD34D;
     --color-priority-low: #94A3B8;
 
-    /* Destructive / Danger Tokens (§2.6) */
     --color-destructive: #EF4444;
     --color-destructive-bg: #450A0A;
+    --color-warning-bg: #3B2005;
   }
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #0B1120;
+  --foreground: #F1F5F9;
 
-  /* Surface & Background Tokens (docs/DESIGN_GUIDELINES.md §2.2) */
   --color-bg-canvas: #0B1120;
+  --color-bg-base: #0B1120;
   --color-bg-surface: #111C33;
   --color-bg-elevated: #152238;
   --color-bg-muted: #0F1A2E;
   --color-bg-hover: #1A2744;
+  --color-bg-surface-hover: #16243F;
   --color-bg-selected: #1E3058;
-  --color-bg-overlay: rgba(0, 0, 0, 0.6);
+  --color-bg-overlay: rgba(0, 0, 0, 0.75);
 
-  /* Border Tokens (§2.3) */
   --color-border-subtle: #1E293B;
   --color-border-default: #334155;
   --color-border-strong: #475569;
+  --color-border-focus: #14B8A6;
   --color-border-destructive: #7F1D1D;
+  --color-border-warning: #78350F;
 
-  /* Text Tokens (§2.4) */
   --color-text-primary: #F1F5F9;
   --color-text-secondary: #CBD5E1;
   --color-text-muted: #94A3B8;
-  --color-text-disabled: #334155;
+  --color-text-disabled: #475569;
   --color-text-on-accent: #042F2E;
   --color-text-destructive: #F87171;
+  --color-text-warning: #FCD34D;
   --color-text-link: #14B8A6;
 
-  /* Accent Tokens (§2.5) */
   --color-accent-primary: #14B8A6;
   --color-accent-primary-hover: #0D9488;
   --color-accent-secondary: #34D399;
+  --color-accent-light: #042F2E;
 
-  /* Semantic Status Tokens — Task Status (§2.6) */
   --color-status-todo: #94A3B8;
   --color-status-in-progress: #38BDF8;
   --color-status-in-review: #A78BFA;
   --color-status-done: #34D399;
 
-  /* Semantic Status Tokens — Task Priority (§2.6) */
   --color-priority-high: #FB7185;
   --color-priority-medium: #FCD34D;
   --color-priority-low: #94A3B8;
 
-  /* Destructive / Danger Tokens (§2.6) */
   --color-destructive: #EF4444;
   --color-destructive-bg: #450A0A;
+  --color-warning-bg: #3B2005;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Polished Swiss card surface utility */
+.swiss-card {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+}
+
+/* Primary interactive button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  background-color: #0F766E;
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  transition: all 150ms ease-in-out;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #115E59;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+}
+.btn-primary:active:not(:disabled) {
+  background-color: #134E4A;
+  transform: scale(0.98);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Focus visibility reset (WCAG 2.1 SC 1.4.11 >= 3:1 focus indicator) */
+*:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

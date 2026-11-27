@@ -447,9 +447,7 @@ Write default styles for mobile, then override at `md:` and `lg:`. Never write d
 ### 8.2 Project Detail Page (`/teams/[teamId]/projects/[projectId]`)
 
 - Header: Project name (H1), status badge, description (truncated, expandable), due date, owner avatar.
-- Sub-navigation tabs: **Tasks** | **Activity** (additional tabs may be added in later phases).
-- Tasks tab defaults to Kanban board view on desktop, with a list/table view toggle.
-- On mobile, tasks tab defaults to tabbed single-column Kanban.
+- Project tasks section defaults to Kanban board view (`Board`) with a `Board | List` view toggle (`?view=board|list`) and tabbed single-column Kanban on mobile, alongside a project-scoped `Activity` tab (`?tab=activity`).
 
 ### 8.3 Task Detail Dialog/Page
 
@@ -466,9 +464,8 @@ Write default styles for mobile, then override at `md:` and `lg:`. Never write d
 
 ### 8.5 Project Date Validation Rules (Approved)
 
-- Project `startDate` must be before `endDate`.
-- Task `dueDate` must be validated on input (no server-only silent failure).
-- If `endDate` is not set, there is no due-date upper bound on tasks.
+- Project `endDate` must be on or after `startDate` (`endDate >= startDate`; same-day start and end dates are allowed, matching `chk_project_dates`).
+- Task `dueDate` is independent of project `startDate` and `endDate` and must only be validated as a valid UTC calendar date (`YYYY-MM-DD`) on input (no lower or upper bound from project dates).
 - These rules must be enforced in both client-side validation (Zod schema) and Server Action validation.
 
 ### 8.6 URL Routing Pattern (Approved)
@@ -517,19 +514,19 @@ Write default styles for mobile, then override at `md:` and `lg:`. Never write d
 
 ```
 ┌────────────────────────────────────┐
-│ TASK-042  · ▲ HIGH                 │  ← Mono ID + Priority icon+label
+│ ▲ HIGH                             │  ← Priority icon + label
 │                                    │
 │ Implement user authentication      │  ← Task title (2-line clamp, font-medium)
 │ system with Better Auth            │
 │                                    │
-│ [Auth] · Jun 15 · [Avatar]        │  ← Project badge · Due date · Assignee avatar
+│ [Auth] · Jun 15 · [Assignee]       │  ← Project badge · Due date · Assignee
 └────────────────────────────────────┘
 ```
 
 **Task card anatomy**:
-- **Line 1**: Task code (`TASK-042`) in monospace (`text-xs font-mono text-[--color-text-muted]`) + priority icon and text label (see [Section 17](#17-status--priority-visual-indicators)).
+- **Line 1**: Priority icon and text label (see [Section 17](#17-status--priority-visual-indicators)) + accessible move/drag trigger for authorized users. Do not invent synthetic sequential task codes (`TASK-042`).
 - **Line 2–3**: Task title, `font-medium text-sm`, `line-clamp-2`.
-- **Line 4**: Project badge pill + due date (red if overdue) + assignee avatar (20px circle). Items separated by `·` or `gap-2`.
+- **Line 4**: Project badge pill (when viewing the team-wide board) + due date (red if overdue) + assignee name/initials. Items separated by `·` or `gap-2`.
 
 **Task card styling**:
 - Background: `bg-[--color-bg-surface]`
@@ -543,26 +540,22 @@ Write default styles for mobile, then override at `md:` and `lg:`. Never write d
 
 ### 9.5 Drag and Drop
 
-- Drag-and-drop for task reordering within and between columns.
-- Implementation: Client Component (`"use client"`) using an approved DnD library (**Pending Validation**: library choice — `@dnd-kit/core` or similar — is an Open Question for Phase 1).
-- During drag, the original card slot shows a placeholder with `border-dashed border-2 border-[--color-border-default]` and transparent background.
-- Dropping into a new column triggers a Server Action to update task status.
+- Drag-and-drop between status columns (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`); tasks within each column sort deterministically (`priority` `HIGH → MEDIUM → LOW`, earliest non-null `dueDate`, `createdAt` desc, `id` asc).
+- Implementation: Client Component (`"use client"`) using **`@dnd-kit/core`** (`^6.3.1`) with pointer, touch, and keyboard sensors, paired with an accessible explicit status-move control on movable cards.
+- During drag, the active card shows subtle elevation/border feedback and target columns highlight their drop border.
+- Dropping into a different column triggers `updateTaskStatusAction` optimistically with server authority and error rollback.
 
-### 9.6 Kanban on Tablet
+### 9.6 Kanban on Tablet (`768px–1023px`)
 
-- Columns visible: 2–3 (depending on column width and viewport).
-- Horizontal scroll with `scroll-snap-type: x mandatory` and `scroll-snap-align: start` on each column.
+- Columns are horizontally scrollable inside the board container with `scroll-snap-type: x mandatory` (`snap-x snap-mandatory`) and `snap-start` on each column, avoiding page-level horizontal overflow.
 - Column minimum width: `280px`.
-- Visible column count indicator at the top (`← Todo | In Progress →`) or scroll dots.
 
-### 9.7 Kanban on Mobile
+### 9.7 Kanban on Mobile (`<768px`)
 
-- **Tabbed single-column view**: 4 tabs rendered as a full-width tab bar at the top of the board section.
-- Active tab label: `IN_PROGRESS` with status dot and count.
+- **Tabbed single-column view**: 4 status tabs (`TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`) with semantic `role="tablist"` / `role="tab"` / `role="tabpanel"`, status dot, label, and count.
 - Each tab shows only the tasks for that status column in a card list.
-- Swipe gesture support between tabs is an enhancement — **Pending Validation** (depends on the interaction library chosen).
+- Swipe gesture support between tabs is **Deferred** in Milestone 2.3; users switch columns via status tabs and move cards via the explicit accessible status-move control.
 - Task cards retain the same anatomy as desktop.
-- `+ Add task` FAB fixed to bottom-right (`fixed bottom-6 right-4`).
 
 ---
 
@@ -599,10 +592,11 @@ Write default styles for mobile, then override at `md:` and `lg:`. Never write d
 
 ### 10.5 Pagination
 
-- Server-side pagination. Page size: 25 rows (desktop), 10 rows (mobile).
+- Server-side pagination for Task List view (`?view=list`) with a consistent page size of **25 items per page** across desktop, tablet, and mobile.
+- Kanban Board (`?view=board`) and the Projects list remain unpaginated.
 - Pagination control: `< Previous  Page 1 of 4  Next >` — text-based, not icon-only.
 - Current page number rendered in `font-semibold`.
-- Pagination placed below the table, right-aligned on desktop, centered on mobile.
+- Pagination placed below the table/card list, right-aligned on desktop, centered on mobile.
 
 ### 10.6 Table Empty State
 
@@ -835,11 +829,11 @@ Covered in [Section 11.2](#112-field-labels).
 
 ### 16.3 Notification Bell (In-App Notifications)
 
-- Bell icon in the sidebar footer (or top bar on mobile).
-- Unread count badge: `bg-[--color-priority-high] text-white rounded-full text-xs` positioned at top-right of bell icon. Badge shows count or `9+` for 10+.
-- Clicking opens a popover/dropdown panel.
-- Notifications fetched via polling (no WebSockets in MVP).
-- Notification items: `avatar + actor name + action description + relative timestamp`.
+- Bell icon in the `WorkspaceSidebar` footer (desktop/tablet) and workspace mobile top header, sharing one state owner and polling lifecycle (not mounted on `/account` or `/teams`).
+- Unread count badge: `bg-[--color-priority-high] text-white rounded-full text-xs` positioned at top-right of bell icon. Badge shows exact count (`1–9`) or `9+` for `10+` across all teams, and is hidden when `0`.
+- Clicking opens a popover/dropdown panel (`All | Unread` tabs, individual `Mark as read`, `Mark all as read`, and `Load more` pagination).
+- Notifications fetched via 30-second visible-tab polling and `visibilitychange` revalidation (no WebSockets in MVP).
+- Notification items: `avatar + actor name + title + action description + workspace team badge + hydration-safe timestamp (UTC on SSR, relative post-mount)`, with sanitized unavailable state when membership is revoked or resources are soft-deleted.
 
 ---
 
@@ -879,7 +873,15 @@ Every status indicator must include **at minimum** a colored dot **and** a text 
 
 ### 17.3 Project Status Indicators
 
-Projects have their own status values (`PLANNING`, `ACTIVE`, `ON_HOLD`, `COMPLETED`, `ARCHIVED`). These follow the same principle: icon + text label + semantic color. Specific color tokens for project statuses are **Pending Validation** (to be defined during Phase 1 schema implementation alongside `docs/DATABASE_DESIGN.md`).
+Projects have five lifecycle status values (`PLANNING`, `ACTIVE`, `ON_HOLD`, `COMPLETED`, `CANCELLED`). Each status badge renders a colored dot indicator paired with a visible text label (`Badge` component):
+
+| Status | Approved Color | Badge Variant | Label |
+| :--- | :--- | :--- | :--- |
+| `PLANNING` | Slate | `slate` | `Planning` |
+| `ACTIVE` | Teal | `teal` | `Active` |
+| `ON_HOLD` | Amber | `amber` | `On Hold` |
+| `COMPLETED` | Emerald | `emerald` | `Completed` |
+| `CANCELLED` | Rose | `rose` | `Cancelled` |
 
 ### 17.4 Overdue Indicator
 
@@ -911,7 +913,7 @@ Projects have their own status values (`PLANNING`, `ACTIVE`, `ON_HOLD`, `COMPLET
 - Skip navigation link: `<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:p-2">Skip to main content</a>` placed as the first element in `<body>`.
 - Dialogs: focus must be trapped inside while open.
 - Escape key: closes dialogs, dropdowns, and popovers.
-- Kanban drag-and-drop: must support keyboard-based move (activate with Space/Enter, arrow keys to move between columns, confirm with Enter, cancel with Escape). Implementation depends on DnD library choice — **Pending Validation**.
+- Kanban drag-and-drop: must support keyboard-based move (activate with Space/Enter, arrow keys to move between columns, confirm with Enter, cancel with Escape) **Verified (Milestone 2.3 / 4.2)** via `@dnd-kit/core` keyboard sensor **plus** a non-drag accessible status `<select>` on every task card and Arrow-key roving `tabIndex` across mobile status tabs.
 
 ### 18.3 Focus Visibility
 
@@ -1159,9 +1161,8 @@ The root layout must set the `dark` class server-side from the user's stored the
 
 ### 21.8 Accessibility Implementation
 
-- Use Radix UI primitives for all complex interactive components: `Dialog`, `DropdownMenu`, `Select`, `Tabs`, `Tooltip`, `Popover`, `AlertDialog`.
-- Do not build custom accessible dialog, tooltip, or dropdown implementations from scratch.
-- All Radix primitives must be styled using the design tokens defined in this document.
+- Shared dialogs and mobile navigation drawers use `src/components/ui/modal-dialog.tsx` (`ModalDialog` + `getFocusableElements` + `trapFocusOnKeyDown`), providing `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `Tab`/`Shift+Tab` focus trapping, configurable initial focus, `Escape` dismissal gated on `isBusy`, and automatic focus restoration to the triggering control (applied across all auth, team, project, task, confirmation, and sidebar drawer surfaces without adding external Radix dependencies).
+- Complex composite controls (`TeamSwitcher`, `NotificationBellPopover`, `MobileStatusTab`, `TaskKanbanBoard`) implement WAI-ARIA `listbox`/`tablist`/`menu`/dialog patterns with Arrow-key navigation, `Home`/`End` support, live regions (`role="status"` / `role="alert"`), and CSS design-token styling.
 
 ---
 
@@ -1178,9 +1179,9 @@ The root layout must set the `dark` class server-side from the user's stored the
 | Subtle border | `--color-border-subtle` | `#E2E8F0` |
 | Default border | `--color-border-default` | `#CBD5E1` |
 | Primary text | `--color-text-primary` | `#0F172A` |
-| Muted text | `--color-text-muted` | `#64748B` |
-| Accent (teal) | `--color-accent-primary` | `#0D9488` |
-| Accent hover | `--color-accent-primary-hover` | `#0F766E` |
+| Muted text | `--color-text-muted` | `#475569` |
+| Accent (teal) | `--color-accent-primary` | `#0F766E` |
+| Accent hover | `--color-accent-primary-hover` | `#115E59` |
 | Destructive | `--color-destructive` | `#DC2626` |
 | Status: Done | `--color-status-done` | `#059669` |
 | Priority: High | `--color-priority-high` | `#E11D48` |
@@ -1212,10 +1213,10 @@ The following items in this document require resolution before the relevant comp
 | :--- | :--- | :--- | :--- |
 | 1 | §6.5 | Mobile navigation pattern | Bottom bar (Option A) vs. top header + slide-out drawer (Option B) |
 | 2 | §8.3 | Task description editor | Plain `<textarea>` vs. lightweight rich text editor (e.g., Tiptap). Must evaluate bundle size impact |
-| 3 | §9.5 | Kanban DnD library | `@dnd-kit/core` vs. `react-beautiful-dnd` vs. native HTML5 DnD |
-| 4 | §9.7 | Mobile Kanban swipe | Whether swipe gesture between status tabs is implemented in Phase 1 or deferred |
-| 5 | §17.3 | Project status color tokens | To be defined during Phase 1 schema implementation |
-| 6 | §18.1 | Contrast validation | All token pairs must be verified with a contrast checker tool during Phase 1 |
+| 3 | §9.5 | Kanban DnD library | **Approved (Milestone 2.3)**: `@dnd-kit/core` (`^6.3.1`) with pointer/touch/keyboard sensors + accessible status-move control |
+| 4 | §9.7 | Mobile Kanban swipe | **Deferred (Milestone 2.3)**: 4 status tabs + card status-move control used in MVP; swipe deferred |
+| 5 | §17.3 | Project status color tokens | **Approved**: `PLANNING` (Slate), `ACTIVE` (Teal), `ON_HOLD` (Amber), `COMPLETED` (Emerald), `CANCELLED` (Rose) |
+| 6 | §18.1 | Contrast validation | **Verified (Milestone 4.2)**: Light/dark text, accent (`#0F766E` / `#14B8A6`), muted (`#475569` / `#94A3B8`), and focus-ring tokens validated via WCAG 2.1 AA contrast math, ESLint `jsx-a11y`, and Playwright `@axe-core/playwright` scans in Chrome |
 
 ---
 

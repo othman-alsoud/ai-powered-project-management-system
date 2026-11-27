@@ -141,7 +141,7 @@ The system enforces a dual-layer guarantee for team ownership:
 
 ```sql
 -- Trigger Function: Enforces Single Team Owner Invariant
-CREATE OR REPLACE FUNCTION verify_team_owner_invariant() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.verify_team_owner_invariant() RETURNS TRIGGER AS $$
 DECLARE
   teams_to_check UUID[];
   target_team_id UUID;
@@ -189,13 +189,19 @@ BEGIN
     END IF;
 
     -- Validate exact owner count on team_member
-    SELECT COUNT(*), MIN("userId") INTO owner_count, actual_owner
+    SELECT COUNT(*) INTO owner_count
     FROM "team_member"
     WHERE "teamId" = target_team_id AND "role" = 'OWNER';
 
     IF owner_count != 1 THEN
       RAISE EXCEPTION 'Team % must have exactly 1 OWNER (found %)', target_team_id, owner_count;
     END IF;
+
+    -- Retrieve the single OWNER UUID (guaranteed exactly 1 row when owner_count = 1)
+    SELECT "userId" INTO actual_owner
+    FROM "team_member"
+    WHERE "teamId" = target_team_id AND "role" = 'OWNER'
+    LIMIT 1;
 
     -- Validate team.ownerId matches team_member OWNER
     IF NOT EXISTS (
@@ -248,6 +254,9 @@ FOR EACH ROW EXECUTE FUNCTION verify_team_owner_invariant();
   CHECK ("endDate" IS NULL OR "startDate" IS NULL OR "endDate" >= "startDate");
   ```
 
+### D. Activity Log Append-Only Enforcement (Deferred to Phase 4)
+- In Phase 3 (Milestone 3.1), `activity_log` immutability (`BR-AUDIT-01`) is enforced at the application layer via the centralized append-only writer (`src/features/activity/writer.ts`) with no `UPDATE` or `DELETE` paths. Database-level trigger enforcement (`BEFORE UPDATE OR DELETE` on `"activity_log"`) is deferred to Phase 4 hardening; no schema or migration changes are introduced in Milestone 3.1.
+
 ---
 
 ## 7. Neon Connection Architecture
@@ -261,6 +270,6 @@ FOR EACH ROW EXECUTE FUNCTION verify_team_owner_invariant();
 
 > [!WARNING]
 > - **Open Question 1 (Invitation Workflow)**: Whether team member additions in the MVP require email verification tokens or direct user addition by existing registered email.
-> - **Open Question 2 (Task Drag-and-Drop Order)**: Whether Kanban board columns require a dedicated integer `order` index per task or sort deterministically by priority and creation date in the MVP.
+> - **Open Question 2 (Task Drag-and-Drop Order)**: **Resolved (Milestone 2.3)** — Columns sort deterministically by priority (`HIGH` → `MEDIUM` → `LOW`), earliest non-null `dueDate` (nulls last), `createdAt` descending, then `id` ascending; no `order` column or schema migration required.
 > - **Open Question 3 (Soft-Delete Project Name Re-use)**: Whether soft-deleted projects or teams allow name re-use within the same team scope (requiring a partial unique index).
 > - **Open Question 4 (Member Task Self-Deletion)**: Whether a standard `MEMBER` should be permitted to soft-delete tasks they personally created if no progress has started (`TODO` status). Currently restricted to `OWNER` and `MANAGER`.

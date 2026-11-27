@@ -18,5 +18,5 @@ export default async function TeamsIndexPage() {
     redirect(`/teams/${destinationId}`);
   }
 
-  return <TeamsOnboarding userName={user.name} />;
+  return <TeamsOnboarding userId={user.id} userName={user.name} />;
 }

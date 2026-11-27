@@ -33,6 +33,19 @@ describe("Next.js Proxy Routing and Authentication Gate", () => {
     expect(redirectUrl.searchParams.get("redirectTo")).toBe(`/teams/${teamId}`);
   });
 
+  it("redirects unauthenticated requests to /account to /sign-in with redirectTo", () => {
+    const req = createRequest("/account");
+    const res = proxy(req);
+
+    expect(res.status).toBe(307);
+    const location = res.headers.get("location");
+    expect(location).toBeDefined();
+
+    const redirectUrl = new URL(location!);
+    expect(redirectUrl.pathname).toBe("/sign-in");
+    expect(redirectUrl.searchParams.get("redirectTo")).toBe("/account");
+  });
+
   // 2. Redirect a nested protected route when no session cookie exists
   it("redirects unauthenticated requests to nested protected routes (/teams/{teamId}/projects/{id}/tasks)", () => {
     const nestedPath = "/teams/team-uuid/projects/proj-uuid/tasks";
@@ -84,6 +97,38 @@ describe("Next.js Proxy Routing and Authentication Gate", () => {
       expect(res.headers.get("x-middleware-next")).toBe("1");
     }
   );
+   
+  // 5.1 Redirect authenticated users from the landing page to /teams
+  it("redirects authenticated users from / to /teams", () => {
+    const req = createRequest("/", {
+      "better-auth.session_token": "valid-dev-session-token",
+    });
+    const res = proxy(req);
+
+    expect(res.status).toBe(307);
+
+    const location = res.headers.get("location");
+    expect(location).toBeDefined();
+
+    const redirectUrl = new URL(location!);
+    expect(redirectUrl.pathname).toBe("/teams");
+  });
+
+  // 5.2 Support secure session cookies on the landing page
+  it("redirects users with a secure session cookie from / to /teams", () => {
+    const req = createRequest("/", {
+      "__Secure-better-auth.session_token": "valid-prod-session-token",
+    });
+    const res = proxy(req);
+
+    expect(res.status).toBe(307);
+
+    const location = res.headers.get("location");
+    expect(location).toBeDefined();
+
+    const redirectUrl = new URL(location!);
+    expect(redirectUrl.pathname).toBe("/teams");
+  });
 
   // 6. Do not redirect /api/auth/*
   it.each([

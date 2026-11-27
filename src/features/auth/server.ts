@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -24,12 +25,13 @@ export type AuthResult = AuthSuccess | AuthFailure;
 
 /**
  * Validates the current session and checks the application user state in the database.
- * Distinguishes between NO_SESSION, USER_NOT_FOUND, and USER_DELETED.
+ * Memoized per RSC request via React cache() to eliminate duplicate session/user lookups
+ * between layouts, pages, and server query helpers without sharing across requests/users.
  *
  * NOTE: Authentication proves identity only. Team authorization (membership, RBAC)
  * must be verified separately per target teamId (BR-CTX-01).
  */
-export async function getAuthenticatedUser(): Promise<AuthResult> {
+export const getAuthenticatedUser = cache(async (): Promise<AuthResult> => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -71,7 +73,7 @@ export async function getAuthenticatedUser(): Promise<AuthResult> {
     user,
     reason: null,
   };
-}
+});
 
 /**
  * Ensures the user is authenticated and active for server-rendered pages.

@@ -61,6 +61,7 @@ src/
 │   │   │   └── [teamId]/       # Approved URL structure: /teams/[teamId]/...
 │   │   │       ├── projects/   # Project views (/teams/[teamId]/projects)
 │   │   │       ├── tasks/      # Task boards and backlogs (/teams/[teamId]/tasks)
+│   │   │       ├── activity/   # Team activity timeline (/teams/[teamId]/activity)
 │   │   │       ├── settings/   # Team settings & members (/teams/[teamId]/settings)
 │   │   │       └── page.tsx    # Team dashboard summary (/teams/[teamId])
 │   ├── api/                    # Route handlers (reserved for Better Auth & external integrations)
@@ -73,8 +74,8 @@ src/
 │   ├── projects/               # Project queries, server actions, components
 │   ├── tasks/                  # Task board, filters, server actions, dialogs
 │   ├── comments/               # Comment thread components and actions
-│   ├── notifications/          # In-app notification bell and popover
-│   └── activity/               # Activity log timeline components
+│   ├── notifications/          # Notification dispatch writer (M3.3) & account-wide notifications center (validation, server, actions, formatters, bell/popover UI - M3.4)
+│   └── activity/               # Activity log foundation (constants, types, validation, writer, server, actions, formatters) & timeline UI (M3.2)
 ├── components/                 # Shared, generic UI components (buttons, dialogs, inputs)
 ├── lib/                        # Core infrastructure singletons
 │   ├── prisma.ts               # PrismaClient instance with @prisma/adapter-pg (Installed)
@@ -88,7 +89,7 @@ src/
 
 ## 3. Server Components vs. Client Components
 
-- **Server Components by Default**: All layout and page files must remain React Server Components to fetch data directly from Prisma on the server, avoiding client-side waterfalls and keeping database credentials secure.
+- **Server Components by Default**: All layout and page files must remain React Server Components to fetch data directly from Prisma on the server, avoiding client-side waterfalls and keeping database credentials secure. Shared per-request auth/membership checks (`getAuthenticatedUser`, `requireTeamMember`, `getTeamById`, `getUserTeams`) use React `cache()` strictly for request-scoped deduplication across layout, page, and server helpers.
 - **Client Components (`"use client"`)**: Used strictly as leaf interactive islands:
   - Form dialogs and inputs requiring local state or optimistic UI
   - Interactive status dropdowns and tabs
@@ -102,7 +103,7 @@ src/
 - **Server Actions**: The primary mechanism for **all application mutations** (create/edit/delete projects, tasks, comments, memberships).
   - Co-located within `src/features/<feature>/actions.ts`.
   - Always execute within authenticated context.
-  - Call `revalidatePath` to trigger immediate RSC cache invalidation.
+  - Call `revalidatePath` to trigger immediate RSC cache invalidation (clients rely on the revalidated Server Action RSC response rather than firing duplicate `router.refresh()` round trips).
 - **Route Handlers (`src/app/api/...`)**: Reserved strictly for:
   - Better Auth endpoints (`/api/auth/[...all]`) handling OAuth redirects, session tokens, and credentials callbacks.
   - Future external webhooks if needed.

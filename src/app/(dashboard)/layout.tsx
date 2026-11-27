@@ -4,7 +4,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen w-full bg-[--color-bg-base] text-[--color-text-primary]">
+    <div className="min-h-screen w-full bg-[--color-bg-canvas] text-[--color-text-primary]">
       {children}
     </div>
   );

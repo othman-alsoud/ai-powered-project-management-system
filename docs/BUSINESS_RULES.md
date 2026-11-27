@@ -29,16 +29,17 @@ The permissions table below is authoritative across all Server Actions and UI pe
 | **Delete Team** | ✅ | ❌ | ❌ |
 | **Transfer Ownership** | ✅ | ❌ | ❌ |
 | **Update Team Settings** (Name, Description) | ✅ | ✅ | ❌ |
-| **Add New Members** | ✅ | ✅ | ❌ |
-| **Change Member Role** (`MANAGER` <-> `MEMBER`) | ✅ | ✅ (cannot change Owner) | ❌ |
-| **Remove Member** | ✅ | ✅ (cannot remove Owner) | ❌ |
+| **Add New Members** | ✅ | ❌ | ❌ |
+| **Change Member Role** (`MANAGER` <-> `MEMBER`) | ✅ | ❌ | ❌ |
+| **Remove Member** | ✅ | ❌ | ❌ |
 | **Create Project** | ✅ | ✅ | ❌ |
 | **Edit Any Project** | ✅ | ✅ | ❌ |
 | **Delete Project** (Soft Delete) | ✅ | ✅ | ❌ |
-| **Create Task** | ✅ | ✅ | ✅ |
-| **Edit Any Task** | ✅ | ✅ | ✅ |
+| **Create Task** | ✅ | ✅ | ❌ |
+| **Edit Any Task** | ✅ | ✅ | ❌ |
+| **Update Assigned Task Status** (`assignedToId === user.id`) | ✅ | ✅ | ✅ |
 | **Delete Task** (Soft Delete) | ✅ | ✅ | ❌ |
-| **Assign Task to Team Member** | ✅ | ✅ | ✅ |
+| **Assign Task to Team Member** | ✅ | ✅ | ❌ |
 | **Post Comment** | ✅ | ✅ | ✅ |
 | **Edit Own Comment** | ✅ | ✅ | ✅ |
 | **Delete Any Comment (Moderation)** | ✅ | ✅ | ❌ |
@@ -71,7 +72,7 @@ The permissions table below is authoritative across all Server Actions and UI pe
   - **Preservation of History**: The internal `User.id` (UUID) remains in the database. All historical projects (`createdById`), tasks (`createdById`), comments, and activity logs remain completely intact and linked, preserving team auditability without displaying personal data.
   - **Prerequisite**: An `OWNER` cannot be anonymized or deleted while owning a team (per BR-TEAM-03).
   - *Pending Technical Validation*: The exact Better Auth OAuth account unlinking sequence and session purge hooks will be validated during Phase 1 implementation.
-- **BR-DEL-03 (Cascade Hiding)**: Soft-deleting a project automatically hides all nested tasks and comments from active UI queries.
+- **BR-DEL-03 (Cascade Hiding)**: Soft-deleting a project automatically hides all nested tasks, comments, and project-associated `ActivityLog` entries (including `project_deleted`) from active UI queries. `task_deleted` entries remain visible when the parent project is active, `comment_deleted` entries remain visible when the parent task and project are active, and all other activity on soft-deleted tasks or comments is hidden.
 
 ---
 
@@ -84,7 +85,7 @@ The permissions table below is authoritative across all Server Actions and UI pe
 
 ## 6. Activity Log Immutability
 
-- **BR-AUDIT-01 (Append-Only Logs)**: Activity logs are strictly append-only. No user role (including OWNER) can modify, edit, or delete an `ActivityLog` entry.
+- **BR-AUDIT-01 (Append-Only Logs & Non-PII Metadata)**: Activity logs are strictly append-only. No user role (including OWNER) can modify, edit, or delete an `ActivityLog` entry. In Phase 3 (Milestone 3.1), immutability is enforced at the application layer through the centralized `ActivityLog` writer (`src/features/activity/writer.ts`) with no update/delete operations; database-level trigger enforcement is deferred to Phase 4. Activity log writes and DTOs must not persist or expose personal email addresses or comment text, and anonymized/deleted actors and target users render as `"Deleted User"`.
 
 ---
 
@@ -93,6 +94,6 @@ The permissions table below is authoritative across all Server Actions and UI pe
 > [!WARNING]
 > The following items are explicitly recorded as unresolved pending technical/product alignment:
 > - **Open Question 1 (Invitation Workflow)**: Whether team member additions in the MVP require email verification tokens or direct user addition by existing registered email.
-> - **Open Question 2 (Task Drag-and-Drop Order)**: Whether Kanban board columns require a dedicated integer `order` index per task or sort deterministically by priority and creation date in the MVP.
+> - **Open Question 2 (Task Drag-and-Drop Order)**: **Resolved (Milestone 2.3)** — Columns sort deterministically by priority (`HIGH` → `MEDIUM` → `LOW`), earliest non-null `dueDate` (nulls last), `createdAt` descending, then `id` ascending without a schema `order` column.
 > - **Open Question 3 (Soft-Delete Project Name Re-use)**: Whether soft-deleted projects or teams allow name re-use within the same team scope (requiring a partial unique index).
 > - **Open Question 4 (Member Task Self-Deletion)**: Whether a standard `MEMBER` should be permitted to soft-delete tasks they personally created if no progress has started (`TODO` status). Currently restricted to `OWNER` and `MANAGER`.

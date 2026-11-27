@@ -31,7 +31,7 @@ vi.mock("@/lib/prisma", () => ({
 import { redirect, notFound } from "next/navigation";
 import { getAuthenticatedUser } from "@/features/auth/server";
 import { prisma } from "@/lib/prisma";
-import { getTeamById, getUserTeams, requireTeamMember } from "../server";
+import { getTeamById, getUserTeams, requireTeamMember, getTeamMembers, requireOwner } from "../server";
 
 const mockUser = {
   id: "user-123",
@@ -189,6 +189,158 @@ describe("Team Server Helpers", () => {
       expect(context.team.id).toBe("team-456");
       expect(context.role).toBe("OWNER");
       expect(context.user.id).toBe("user-123");
+    });
+
+    it("authorizes unverified users (emailVerified: false) who are active team members", async () => {
+      vi.mocked(getAuthenticatedUser).mockResolvedValueOnce({
+        success: true,
+        status: "AUTHENTICATED",
+        user: { ...mockUser, emailVerified: false },
+        reason: null,
+      });
+
+      vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce(
+        mockMembership as unknown as Awaited<ReturnType<typeof prisma.teamMember.findUnique>>
+      );
+
+      const context = await requireTeamMember("team-456");
+      expect(context.team.id).toBe("team-456");
+      expect(context.role).toBe("OWNER");
+      expect(context.user.emailVerified).toBe(false);
+    });
+  });
+
+  describe("getTeamMembers", () => {
+    it("returns active members mapped to TeamMemberSummary", async () => {
+      const mockMembershipsWithUser = [
+        {
+          teamId: "team-456",
+          userId: "user-123",
+          role: "OWNER" as const,
+          joinedAt: new Date("2026-01-01"),
+          user: {
+            id: "user-123",
+            name: "Alice Owner",
+            email: "alice@example.com",
+            image: null,
+          },
+        },
+        {
+          teamId: "team-456",
+          userId: "user-456",
+          role: "MEMBER" as const,
+          joinedAt: new Date("2026-01-02"),
+          user: {
+            id: "user-456",
+            name: "Bob Contributor",
+            email: "bob@example.com",
+            image: "https://example.com/avatar.png",
+          },
+        },
+      ];
+
+      vi.mocked(prisma.teamMember.findMany).mockResolvedValueOnce(
+        mockMembershipsWithUser as unknown as Awaited<ReturnType<typeof prisma.teamMember.findMany>>
+      );
+
+      const members = await getTeamMembers("team-456");
+      expect(members).toHaveLength(2);
+      expect(members[0]).toEqual({
+        userId: "user-123",
+        name: "Alice Owner",
+        email: "alice@example.com",
+        image: null,
+        role: "OWNER",
+        joinedAt: new Date("2026-01-01"),
+      });
+      expect(members[1]).toEqual({
+        userId: "user-456",
+        name: "Bob Contributor",
+        email: "bob@example.com",
+        image: "https://example.com/avatar.png",
+        role: "MEMBER",
+        joinedAt: new Date("2026-01-02"),
+      });
+
+      expect(prisma.teamMember.findMany).toHaveBeenCalledWith({
+        where: {
+          teamId: "team-456",
+          team: {
+            deletedAt: null,
+          },
+        },
+        select: {
+          userId: true,
+          role: true,
+          joinedAt: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: {
+          joinedAt: "asc",
+        },
+      });
+    });
+  });
+
+  describe("requireOwner", () => {
+    it("returns membership when user is an active OWNER", async () => {
+      vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce(
+        mockMembership as unknown as Awaited<ReturnType<typeof prisma.teamMember.findUnique>>
+      );
+
+      const membership = await requireOwner("team-456", "user-123");
+      expect(membership.userId).toBe("user-123");
+      expect(membership.role).toBe("OWNER");
+    });
+
+    it("throws error when user is not a member of the team", async () => {
+      vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce(null);
+
+      await expect(requireOwner("team-456", "user-outside")).rejects.toThrow(
+        "Forbidden: Not an active member of this team."
+      );
+    });
+
+    it("throws error when team is soft-deleted", async () => {
+      vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce({
+        ...mockMembership,
+        team: {
+          ...mockTeam,
+          deletedAt: new Date(),
+        },
+      } as unknown as Awaited<ReturnType<typeof prisma.teamMember.findUnique>>);
+
+      await expect(requireOwner("team-456", "user-123")).rejects.toThrow(
+        "Forbidden: Not an active member of this team."
+      );
+    });
+
+    it("throws error when member is not an OWNER (e.g. MANAGER)", async () => {
+      vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce({
+        ...mockMembership,
+        role: "MANAGER",
+      } as unknown as Awaited<ReturnType<typeof prisma.teamMember.findUnique>>);
+
+      await expect(requireOwner("team-456", "user-manager")).rejects.toThrow(
+        "Forbidden: Only the team owner can perform this action."
+      );
+    });
+
+    it("throws error when member is a MEMBER", async () => {
+      vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce({
+        ...mockMembership,
+        role: "MEMBER",
+      } as unknown as Awaited<ReturnType<typeof prisma.teamMember.findUnique>>);
+
+      await expect(requireOwner("team-456", "user-member")).rejects.toThrow(
+        "Forbidden: Only the team owner can perform this action."
+      );
     });
   });
 });

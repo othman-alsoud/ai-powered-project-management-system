@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import {
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+} from "lucide-react";
 
 type VerifyState =
   | { phase: "no-token" }
@@ -61,21 +67,25 @@ function VerifyEmailContent() {
   return (
     <main
       id="main-content"
-      className="flex min-h-full flex-1 flex-col items-center justify-center px-4 py-16 md:py-24"
+      className="flex w-full items-center justify-center py-6 sm:py-10"
     >
-      <div className="w-full max-w-sm">
+      <div className="relative w-full max-w-md rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-10 shadow-lg shadow-slate-900/5">
+        <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-teal-500 via-teal-600 to-emerald-500 rounded-t-2xl" />
+
         {state.phase === "verifying" && (
           <div
             role="status"
             aria-live="polite"
-            className="flex flex-col items-center rounded-lg border border-[--color-border-subtle] bg-[--color-bg-surface] p-8 text-center"
+            className="flex flex-col items-center text-center"
           >
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--color-accent-primary] border-t-transparent" />
-            <h1 className="mt-4 text-lg font-semibold text-[--color-text-primary]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 shadow-xs">
+              <Loader2 className="h-7 w-7 animate-spin" strokeWidth={2.2} aria-hidden="true" />
+            </div>
+            <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Verifying your email
             </h1>
-            <p className="mt-1 text-sm text-[--color-text-muted]">
-              Please wait while we confirm your email address...
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Please wait while we confirm your email credentials with the authorization server...
             </p>
           </div>
         )}
@@ -84,39 +94,26 @@ function VerifyEmailContent() {
           <div
             role="status"
             aria-live="polite"
-            className="rounded-lg border border-[--color-border-subtle] bg-[--color-bg-surface] p-8 text-center"
+            className="text-center"
           >
             <div
               aria-hidden="true"
-              className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[--color-accent-secondary]/15 text-[--color-accent-secondary]"
+              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-xs"
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4 10l4.5 4.5L16 6"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <CheckCircle2 className="h-7 w-7" strokeWidth={2.2} aria-hidden="true" />
             </div>
-            <h1 className="text-xl font-semibold tracking-tight text-[--color-text-primary]">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Email verified!
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-[--color-text-secondary]">
-              Your email address has been successfully verified. You can now access your account.
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              Your email address has been successfully verified. You can now access your team workspace.
             </p>
             <Link
               href="/sign-in"
-              className="mt-6 inline-flex h-9 w-full items-center justify-center rounded-md bg-[--color-accent-primary] px-4 text-sm font-medium text-[--color-text-on-accent] transition-colors duration-150 hover:bg-[--color-accent-primary-hover] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-accent-primary] focus-visible:ring-offset-2"
+              className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 dark:focus-visible:ring-teal-400 focus-visible:ring-offset-2"
             >
-              Continue to Sign In
+              <span>Continue to Sign In</span>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         )}
@@ -124,44 +121,31 @@ function VerifyEmailContent() {
         {(state.phase === "no-token" || state.phase === "error") && (
           <div
             role="alert"
-            className="rounded-lg border border-[--color-border-destructive] bg-[--color-bg-surface] p-8 text-center"
+            className="text-center"
           >
             <div
               aria-hidden="true"
-              className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[--color-destructive-bg] text-[--color-text-destructive]"
+              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-xs"
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M10 6v5m0 3h.01M10 18a8 8 0 100-16 8 8 0 000 16z"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <AlertTriangle className="h-7 w-7" strokeWidth={2.2} aria-hidden="true" />
             </div>
-            <h1 className="text-xl font-semibold tracking-tight text-[--color-text-primary]">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Verification link invalid
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-[--color-text-secondary]">
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
               {state.phase === "no-token"
                 ? "No verification token was provided in the link."
                 : state.message}
             </p>
-            <p className="mt-4 text-xs text-[--color-text-muted]">
+            <p className="mt-4 text-xs text-slate-600 dark:text-slate-400">
               Need a new link? You can request one by attempting to sign in with your email.
             </p>
             <Link
               href="/sign-in"
-              className="mt-6 inline-flex h-9 w-full items-center justify-center rounded-md border border-[--color-border-subtle] bg-[--color-bg-surface] px-4 text-sm font-medium text-[--color-text-primary] transition-colors duration-150 hover:bg-[--color-bg-surface-hover] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-accent-primary] focus-visible:ring-offset-2"
+              className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-200 font-medium shadow-2xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 dark:focus-visible:ring-teal-400 focus-visible:ring-offset-2"
             >
-              Return to Sign In
+              <span>Return to Sign In</span>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         )}
@@ -174,8 +158,17 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-full flex-1 flex-col items-center justify-center px-4 py-16">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--color-accent-primary] border-t-transparent" />
+        <main
+          id="main-content"
+          className="flex w-full items-center justify-center py-16"
+        >
+          <div role="status" className="flex items-center justify-center">
+            <div
+              className="h-6 w-6 animate-spin rounded-full border-2 border-teal-700 border-t-transparent"
+              aria-hidden="true"
+            />
+            <span className="sr-only">Verifying email…</span>
+          </div>
         </main>
       }
     >

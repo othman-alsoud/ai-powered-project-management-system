@@ -76,6 +76,25 @@ describe("performSignUp — success", () => {
       expect(result.hasSession).toBe(false);
     }
   });
+
+  it("allows immediate access with session after registration when email verification is disabled", async () => {
+    mockSignUpEmail.mockResolvedValue(
+      makeApiResponse(
+        {
+          token: "tok_immediate_session",
+          user: { id: "u1", email: "alice@example.com", emailVerified: false },
+        },
+        null,
+      ),
+    );
+
+    const result = await performSignUp(validPayload);
+
+    expect(result.status).toBe("success");
+    if (result.status === "success") {
+      expect(result.hasSession).toBe(true);
+    }
+  });
 });
 
 describe("performSignUp — Better Auth field errors", () => {

@@ -53,6 +53,13 @@ const mockActiveUser: User = {
   deletedAt: null,
 };
 
+const mockUnverifiedUser: User = {
+  ...mockActiveUser,
+  id: "user-uuid-unverified",
+  email: "unverified@example.com",
+  emailVerified: false,
+};
+
 const mockDeletedUser: User = {
   ...mockActiveUser,
   id: "user-uuid-deleted",
@@ -88,6 +95,26 @@ describe("Server Authentication Helpers", () => {
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: "user-uuid-1234" },
       });
+    });
+
+    it("returns authenticated user when user is active even if email is unverified (emailVerified: false)", async () => {
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
+        user: { id: "user-uuid-unverified" },
+        session: { id: "session-unverified", userId: "user-uuid-unverified" },
+      } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUnverifiedUser);
+
+      const result = await getAuthenticatedUser();
+
+      expect(result).toEqual({
+        success: true,
+        status: "AUTHENTICATED",
+        user: mockUnverifiedUser,
+        reason: null,
+      });
+
+      expect(result.user?.emailVerified).toBe(false);
     });
 
     it("returns USER_DELETED when user has deletedAt timestamp", async () => {
@@ -184,6 +211,21 @@ describe("Server Authentication Helpers", () => {
       expect(redirect).not.toHaveBeenCalled();
     });
 
+    it("allows unverified users (emailVerified: false) to access protected pages without redirecting", async () => {
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
+        user: { id: "user-uuid-unverified" },
+        session: { id: "session-unverified", userId: "user-uuid-unverified" },
+      } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUnverifiedUser);
+
+      const user = await requireAuthPage();
+
+      expect(user).toEqual(mockUnverifiedUser);
+      expect(user.emailVerified).toBe(false);
+      expect(redirect).not.toHaveBeenCalled();
+    });
+
     it("redirects to /sign-in by default when there is no session", async () => {
       vi.mocked(auth.api.getSession).mockResolvedValueOnce(null);
 
@@ -237,6 +279,21 @@ describe("Server Authentication Helpers", () => {
       const user = await getActionUser();
 
       expect(user).toEqual(mockActiveUser);
+      expect(redirect).not.toHaveBeenCalled();
+    });
+
+    it("returns user object for unverified users (emailVerified: false) when session is valid and active", async () => {
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
+        user: { id: "user-uuid-unverified" },
+        session: { id: "session-unverified", userId: "user-uuid-unverified" },
+      } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUnverifiedUser);
+
+      const user = await getActionUser();
+
+      expect(user).toEqual(mockUnverifiedUser);
+      expect(user?.emailVerified).toBe(false);
       expect(redirect).not.toHaveBeenCalled();
     });
 

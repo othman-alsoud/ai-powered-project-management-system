@@ -44,6 +44,27 @@ describe("performSignIn", () => {
     });
   });
 
+  it("allows unverified users to sign in and returns status success with session when email verification is disabled", async () => {
+    vi.mocked(authClient.signIn.email).mockResolvedValueOnce({
+      data: {
+        token: "session-token-unverified",
+        user: { id: "u-unverified", email: "unverified@example.com", emailVerified: false },
+      },
+      error: null,
+    } as unknown as Awaited<ReturnType<typeof authClient.signIn.email>>);
+
+    const result = await performSignIn({
+      email: "unverified@example.com",
+      password: "password123",
+      rememberMe: false,
+    });
+
+    expect(result).toEqual<SignInResult>({
+      status: "success",
+      hasSession: true,
+    });
+  });
+
   it("handles INVALID_EMAIL_OR_PASSWORD with a generic credential error", async () => {
     vi.mocked(authClient.signIn.email).mockResolvedValueOnce({
       data: null,

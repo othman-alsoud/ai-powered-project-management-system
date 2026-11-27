@@ -1,3 +1,4 @@
+import { getUnreadNotificationCount } from "@/features/notifications/server";
 import { requireTeamMember, getUserTeams } from "@/features/teams/server";
 import { WorkspaceSidebar } from "@/features/teams/components/sidebar";
 
@@ -13,14 +14,18 @@ export default async function TeamWorkspaceLayout(props: TeamWorkspaceLayoutProp
 
   // Authoritative server-side tenant boundary check: triggers notFound() if unauthorized
   const { user, team, role } = await requireTeamMember(teamId);
-  const userTeams = await getUserTeams(user.id);
+  const [userTeams, initialUnreadNotificationsCount] = await Promise.all([
+    getUserTeams(user.id),
+    getUnreadNotificationCount(user.id),
+  ]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col md:flex-row bg-[--color-bg-base]">
+    <div className="flex min-h-screen w-full flex-col md:h-screen md:flex-row md:overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <WorkspaceSidebar
         currentTeam={{ id: team.id, name: team.name }}
         currentRole={role}
         userTeams={userTeams}
+        initialUnreadNotificationsCount={initialUnreadNotificationsCount}
         currentUser={{
           id: user.id,
           name: user.name,
@@ -28,7 +33,7 @@ export default async function TeamWorkspaceLayout(props: TeamWorkspaceLayoutProp
           image: user.image,
         }}
       />
-      <div className="flex flex-1 flex-col overflow-y-auto">
+      <div className="flex flex-1 flex-col min-w-0 min-h-0 w-full overflow-y-auto">
         {props.children}
       </div>
     </div>

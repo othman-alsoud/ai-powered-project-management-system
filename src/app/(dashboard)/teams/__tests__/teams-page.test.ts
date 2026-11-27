@@ -94,4 +94,45 @@ describe("TeamsIndexPage routing", () => {
     expect(result).toBeDefined();
     expect(redirect).not.toHaveBeenCalled();
   });
+
+  it("renders onboarding component when unverified user (emailVerified: false) has 0 teams", async () => {
+    vi.mocked(requireAuthPage).mockResolvedValueOnce({
+      id: "user-unverified",
+      name: "Unverified User",
+      email: "unverified@example.com",
+      emailVerified: false,
+      image: null,
+      lastActiveTeamId: null,
+      deletedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    vi.mocked(getUserTeams).mockResolvedValueOnce([]);
+
+    const result = await TeamsIndexPage();
+    expect(result).toBeDefined();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("redirects unverified user (emailVerified: false) to their active workspace", async () => {
+    vi.mocked(requireAuthPage).mockResolvedValueOnce({
+      id: "user-unverified",
+      name: "Unverified User",
+      email: "unverified@example.com",
+      emailVerified: false,
+      image: null,
+      lastActiveTeamId: "team-unverified-1",
+      deletedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    vi.mocked(getUserTeams).mockResolvedValueOnce([
+      { id: "team-unverified-1", name: "Alpha Workspace", description: null, role: "OWNER", joinedAt: new Date() },
+    ]);
+
+    await expect(TeamsIndexPage()).rejects.toThrow("NEXT_REDIRECT: /teams/team-unverified-1");
+    expect(redirect).toHaveBeenCalledWith("/teams/team-unverified-1");
+  });
 });
